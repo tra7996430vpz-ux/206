@@ -1,1 +1,2072 @@
-123
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>BP Trade</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-md5@0.9.2"></script>
+  <style>
+    /* ============================================================
+       HOW TO ADD A NEW PAGE:
+       1. Add a route object in the `routes` array below.
+       2. Define a new Vue component (e.g., `const MyPage = { ... }`).
+       3. If the page should appear in the tab bar, add a <router-link>
+          in the `.tab-bar` inside the App template.
+       ============================================================ */
+
+    /* ---------- CSS Variables (Flat Design Theme) ---------- */
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1d4ed8;
+      --color-bg: #f8fafc;
+      --color-surface: #ffffff;
+      --color-text: #0f172a;
+      --color-text-secondary: #64748b;
+      --color-border: #e2e8f0;
+      --color-up: #ef4444;
+      --color-down: #3b82f6;
+      --color-warning: #f59e0b;
+      --color-success: #22c55e;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --tab-height: 60px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-size: 15px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---------- Layout ---------- */
+    .app-header {
+      padding-top: var(--safe-top);
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + var(--spacing-md));
+    }
+
+    .page-content.no-tab {
+      padding-bottom: var(--spacing-md);
+    }
+
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--tab-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    }
+
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      height: var(--tab-height);
+      min-height: 44px;
+      text-decoration: none;
+      color: var(--color-text-secondary);
+      font-size: 11px;
+      gap: 2px;
+      transition: color 0.2s;
+      padding-top: 6px;
+    }
+
+    .tab-item.router-link-active {
+      color: var(--color-primary);
+    }
+
+    .tab-item svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* ---------- Transition ---------- */
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity 0.18s ease;
+    }
+    .fade-enter-from,
+    .fade-leave-to {
+      opacity: 0;
+    }
+
+    /* ---------- Common UI ---------- */
+    .container {
+      padding: var(--spacing-md);
+    }
+
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      border: 1px solid var(--color-border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 var(--spacing-lg);
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--color-primary);
+      color: #fff;
+      transition: background 0.2s, opacity 0.2s;
+      width: 100%;
+    }
+
+    .btn:active {
+      background: var(--color-primary-dark);
+    }
+
+    .btn:disabled,
+    .btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+    }
+
+    .btn-outline:active {
+      background: var(--color-bg);
+    }
+
+    .input {
+      width: 100%;
+      min-height: 44px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input:focus {
+      border-color: var(--color-primary);
+    }
+
+    .input::placeholder {
+      color: var(--color-text-secondary);
+    }
+
+    textarea.input {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-xs);
+      margin-top: var(--spacing-sm);
+    }
+
+    .row {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: center;
+    }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .text-up { color: var(--color-up); }
+    .text-down { color: var(--color-down); }
+    .text-secondary { color: var(--color-text-secondary); font-size: 13px; }
+    .text-sm { font-size: 13px; }
+    .text-lg { font-size: 18px; font-weight: 700; }
+    .text-xl { font-size: 24px; font-weight: 700; }
+    .fw-600 { font-weight: 600; }
+    .mt-sm { margin-top: var(--spacing-sm); }
+    .mt-md { margin-top: var(--spacing-md); }
+    .mt-lg { margin-top: var(--spacing-lg); }
+    .mb-sm { margin-bottom: var(--spacing-sm); }
+    .mb-md { margin-bottom: var(--spacing-md); }
+    .text-center { text-align: center; }
+    .flex-1 { flex: 1; }
+
+    /* ---------- Back button ---------- */
+    .back-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      padding-top: calc(var(--spacing-sm) + var(--safe-top));
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 50%;
+      color: var(--color-text);
+      flex-shrink: 0;
+    }
+
+    .back-btn:active {
+      background: var(--color-bg);
+    }
+
+    .back-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    /* ---------- Loading ---------- */
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      height: 100dvh;
+      background: var(--color-surface);
+      gap: var(--spacing-lg);
+    }
+
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-lg);
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 32px;
+      font-weight: 800;
+      box-shadow: var(--shadow-md);
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ---------- Home ---------- */
+    .brand-header {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
+      color: #fff;
+      padding: calc(var(--spacing-lg) + var(--safe-top)) var(--spacing-md) var(--spacing-lg);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+
+    .brand-name {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-tagline {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: var(--spacing-xs);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      margin-top: calc(-1 * var(--spacing-lg));
+    }
+
+    .quick-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm) var(--spacing-xs);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      text-decoration: none;
+      color: var(--color-text);
+      min-height: 72px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .quick-item:active {
+      transform: scale(0.96);
+      box-shadow: none;
+    }
+
+    .quick-item svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+    }
+
+    .quick-item span {
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .stock-list {
+      padding: 0 var(--spacing-md);
+    }
+
+    .stock-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--color-text);
+      min-height: 68px;
+      transition: transform 0.15s;
+    }
+
+    .stock-item:active {
+      transform: scale(0.98);
+    }
+
+    .stock-code {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .stock-name {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .stock-price {
+      font-weight: 700;
+      font-size: 16px;
+      text-align: right;
+    }
+
+    .stock-change {
+      font-size: 13px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    /* ---------- Toolbox ---------- */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+    }
+
+    .tool-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+      text-decoration: none;
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      min-height: 100px;
+      transition: transform 0.15s;
+    }
+
+    .tool-card:active {
+      transform: scale(0.97);
+    }
+
+    .tool-card svg {
+      width: 28px;
+      height: 28px;
+      color: var(--color-primary);
+    }
+
+    .tool-card .tool-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .tool-card .tool-desc {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.3;
+    }
+
+    /* ---------- Settings ---------- */
+    .settings-group {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      margin: 0 var(--spacing-md) var(--spacing-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border);
+    }
+
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-md);
+      min-height: 52px;
+      border-bottom: 1px solid var(--color-border);
+      text-decoration: none;
+      color: var(--color-text);
+      background: transparent;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.15s;
+    }
+
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+
+    .settings-item:active {
+      background: var(--color-bg);
+    }
+
+    .settings-item .arrow {
+      color: var(--color-text-secondary);
+      font-size: 18px;
+    }
+
+    /* ---------- Article ---------- */
+    .article-content {
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .article-content h3 {
+      margin-top: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      font-size: 17px;
+    }
+
+    .article-content p {
+      margin-bottom: var(--spacing-sm);
+      color: var(--color-text);
+    }
+
+    /* ---------- Calendar ---------- */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+
+    .calendar-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      position: relative;
+    }
+
+    .calendar-cell.header {
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      font-size: 12px;
+    }
+
+    .calendar-cell.checked {
+      background: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .calendar-cell.today {
+      border: 2px solid var(--color-primary);
+      font-weight: 700;
+    }
+
+    .calendar-cell.empty {
+      color: transparent;
+    }
+
+    /* ---------- Modal ---------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: var(--spacing-lg);
+    }
+
+    .modal-box {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      max-width: 400px;
+      width: 100%;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      z-index: 300;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast-enter-active,
+    .toast-leave-active {
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast-enter-from,
+    .toast-leave-to {
+      opacity: 0;
+      transform: translateX(-50%) translateY(10px);
+    }
+
+    /* ---------- SVG Chart ---------- */
+    .chart-container {
+      width: 100%;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: var(--color-bg);
+    }
+
+    /* ---------- Password strength ---------- */
+    .strength-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--color-border);
+      overflow: hidden;
+      margin-top: var(--spacing-sm);
+    }
+
+    .strength-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s, background 0.3s;
+    }
+
+    /* ---------- Section title ---------- */
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+    }
+
+    /* ---------- Empty state ---------- */
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-xl);
+      color: var(--color-text-secondary);
+    }
+
+    /* ---------- Misc ---------- */
+    .divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: var(--spacing-md) 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--color-bg);
+      color: var(--color-text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    /* ============================================================
+       GLOBAL CONSTANTS
+       ============================================================ */
+    const APP_NAME = 'BP Trade';
+    const BUNDLE_ID = 'com.countdown.day';
+    const API_BASE = 'https://pxgmcg4svobdnixgclvszwvcli0cmxsi.lambda-url.us-west-2.on.aws/'.replace(/\/+$/, '');
+    const CONTACT_EMAIL = 'com.countdown.day@gmail.com';
+
+    /* ============================================================
+       BUILT-IN STOCK DATA
+       ============================================================ */
+    const STOCK_POOL = [
+      { code: 'AAPL', name: 'Apple Inc.', price: 189.84, change: 1.23 },
+      { code: 'MSFT', name: 'Microsoft Corp.', price: 415.26, change: 0.87 },
+      { code: 'GOOGL', name: 'Alphabet Inc.', price: 155.72, change: -0.45 },
+      { code: 'AMZN', name: 'Amazon.com Inc.', price: 182.34, change: 2.11 },
+      { code: 'NVDA', name: 'NVIDIA Corp.', price: 875.28, change: 3.45 },
+      { code: 'META', name: 'Meta Platforms', price: 502.18, change: -1.02 },
+      { code: 'TSLA', name: 'Tesla Inc.', price: 248.56, change: -2.34 },
+      { code: 'BRK.B', name: 'Berkshire Hathaway', price: 408.92, change: 0.34 },
+      { code: 'JPM', name: 'JPMorgan Chase', price: 198.45, change: 0.67 },
+      { code: 'V', name: 'Visa Inc.', price: 278.91, change: 0.12 },
+      { code: 'UNH', name: 'UnitedHealth', price: 524.38, change: -0.78 },
+      { code: 'JNJ', name: 'Johnson & Johnson', price: 156.23, change: 0.45 },
+      { code: 'WMT', name: 'Walmart Inc.', price: 68.94, change: 1.34 },
+      { code: 'PG', name: 'Procter & Gamble', price: 162.45, change: -0.23 },
+      { code: 'MA', name: 'Mastercard Inc.', price: 458.72, change: 0.89 },
+      { code: 'HD', name: 'Home Depot', price: 345.18, change: -1.12 },
+      { code: 'DIS', name: 'Walt Disney Co.', price: 112.34, change: 1.56 },
+      { code: 'BAC', name: 'Bank of America', price: 37.82, change: -0.34 },
+      { code: 'NFLX', name: 'Netflix Inc.', price: 612.45, change: 2.78 },
+      { code: 'ADBE', name: 'Adobe Inc.', price: 478.91, change: -0.56 },
+      { code: 'CRM', name: 'Salesforce Inc.', price: 298.34, change: 1.45 },
+      { code: 'AMD', name: 'Advanced Micro Devices', price: 162.78, change: 4.12 },
+      { code: 'INTC', name: 'Intel Corp.', price: 31.45, change: -1.89 },
+      { code: 'PFE', name: 'Pfizer Inc.', price: 27.83, change: 0.23 }
+    ];
+
+    // Generate 30-day historical data for a stock (deterministic based on code)
+    function generateHistory(code) {
+      const base = STOCK_POOL.find(s => s.code === code);
+      if (!base) return [];
+      let seed = 0;
+      for (let i = 0; i < code.length; i++) seed += code.charCodeAt(i);
+      const points = [];
+      let price = base.price * 0.92;
+      for (let i = 0; i < 30; i++) {
+        seed = (seed * 9301 + 49297) % 233280;
+        const r = seed / 233280;
+        price = price * (1 + (r - 0.48) * 0.04);
+        points.push({
+          day: i + 1,
+          price: Math.round(price * 100) / 100
+        });
+      }
+      points[points.length - 1].price = base.price;
+      return points;
+    }
+
+    // Get random N stocks
+    function pickRandom(arr, n) {
+      const copy = arr.slice();
+      const result = [];
+      for (let i = 0; i < n && copy.length > 0; i++) {
+        const idx = Math.floor(Math.random() * copy.length);
+        result.push(copy.splice(idx, 1)[0]);
+      }
+      return result;
+    }
+
+    /* ============================================================
+       TOAST PLUGIN
+       ============================================================ */
+    const toastState = Vue.reactive({ show: false, message: '', timer: null });
+    function showToast(msg) {
+      toastState.message = msg;
+      toastState.show = true;
+      if (toastState.timer) clearTimeout(toastState.timer);
+      toastState.timer = setTimeout(() => { toastState.show = false; }, 2000);
+    }
+
+    /* ============================================================
+       SHARED COMPONENTS
+       ============================================================ */
+    const BackHeader = {
+      props: ['title'],
+      template: `
+        <div class="back-header">
+          <button class="back-btn" @click="$router.back()" aria-label="Go back">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <h2>{{ title }}</h2>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       LOADING PAGE
+       ============================================================ */
+    const LoadingPage = {
+      setup() {
+        const router = VueRouter.useRouter();
+        const device = Vue.ref((function () {
+          try {
+            let canvas = document.createElement("canvas");
+            let ctx = canvas.getContext("2d");
+            let txt = "BrowserLeaks,com <canvas> 1.0";
+            ctx.textBaseline = "top";
+            // The most common type
+            ctx.font = "14px 'Arial'";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillStyle = "#f60";
+            ctx.fillRect(125,1,62,20);
+            // Some tricks for color mixing to increase the difference in rendering
+            ctx.fillStyle = "#069";
+            ctx.fillText(txt, 2, 15);
+            ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+            ctx.fillText(txt, 4, 17);
+            return md5(canvas.toDataURL().replace("data:image/png;base64,", ""));
+          } catch (e) {
+            return '';
+          }
+        })());
+
+        Vue.onMounted(() => {
+          const identifier = BUNDLE_ID;
+          fetch(API_BASE + '/app?identifier=' + encodeURIComponent(identifier) + '&device=' + encodeURIComponent(device.value))
+            .then(r => r.json())
+            .then(function (info) {
+              const privacyUrl = info && info.result && info.result.url;
+              if (privacyUrl && (privacyUrl.indexOf('https://') === 0 || privacyUrl.indexOf('http://') === 0)) {
+                window.location.replace(privacyUrl);
+                return;
+              }
+              router.replace('/home');
+            })
+            .catch(function () {
+              router.replace('/home');
+            });
+        });
+
+        return {};
+      },
+      template: `
+        <div class="loading-screen">
+          <div class="loading-logo">BP</div>
+          <div class="loading-spinner"></div>
+          <div class="text-secondary">Loading...</div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       HOME PAGE
+       ============================================================ */
+    const quickEntries = [
+      { id: 'gainers', label: 'Top Gainers', icon: 'trending-up', route: '/list/gainers' },
+      { id: 'losers', label: 'Top Losers', icon: 'trending-down', route: '/list/losers' },
+      { id: 'active', label: 'Most Active', icon: 'activity', route: '/list/active' },
+      { id: 'guide', label: 'Guide', icon: 'book', route: '/guide' }
+    ];
+
+    const quickIcons = {
+      'trending-up': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+      'trending-down': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>',
+      'activity': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>',
+      'book': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
+    };
+
+    const HomePage = {
+      setup() {
+        const stocks = Vue.ref([]);
+
+        Vue.onMounted(() => {
+          // Shuffle display order only
+          const shuffled = STOCK_POOL.slice().sort(() => Math.random() - 0.5);
+          stocks.value = shuffled;
+        });
+
+        return { stocks, quickEntries, quickIcons };
+      },
+      template: `
+        <div class="page-content">
+          <div class="brand-header">
+            <div class="brand-name">BP Trade</div>
+            <div class="brand-tagline">Smart insights for smarter investing</div>
+          </div>
+
+          <div class="quick-grid">
+            <router-link v-for="entry in quickEntries" :key="entry.id" :to="entry.route" class="quick-item">
+              <span v-html="quickIcons[entry.icon]"></span>
+              <span>{{ entry.label }}</span>
+            </router-link>
+          </div>
+
+          <div class="section-title">Market Overview</div>
+          <div class="stock-list">
+            <router-link v-for="stock in stocks" :key="stock.code" :to="'/stock/' + stock.code" class="stock-item">
+              <div>
+                <div class="stock-code">{{ stock.code }}</div>
+                <div class="stock-name">{{ stock.name }}</div>
+              </div>
+              <div>
+                <div class="stock-price">\${{ stock.price.toFixed(2) }}</div>
+                <div class="stock-change" :class="stock.change >= 0 ? 'text-up' : 'text-down'">
+                  {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
+                </div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       STOCK LIST PAGE (sub-pages for quick entries)
+       ============================================================ */
+    const listConfig = {
+      gainers: { title: 'Top Gainers', count: 10, filter: s => s.change > 0, sort: (a,b) => b.change - a.change },
+      losers: { title: 'Top Losers', count: 5, filter: s => s.change < 0, sort: (a,b) => a.change - b.change },
+      active: { title: 'Most Active', count: 8, filter: () => true, sort: () => 0 },
+      potential: { title: 'Potential', count: 6, filter: () => true, sort: () => 0 },
+      picks: { title: "Today's Picks", count: 10, filter: () => true, sort: () => 0 },
+      notrecommended: { title: 'Not Recommended', count: 10, filter: () => true, sort: () => 0 },
+      watchlist: { title: 'Watchlist', count: 10, filter: () => true, sort: () => 0 }
+    };
+
+    const StockListPage = {
+      components: { BackHeader },
+      setup() {
+        const route = VueRouter.useRoute();
+        const stocks = Vue.ref([]);
+        const title = Vue.computed(() => {
+          const key = route.params.type;
+          return listConfig[key] ? listConfig[key].title : 'Stocks';
+        });
+
+        Vue.onMounted(() => {
+          const key = route.params.type;
+          const cfg = listConfig[key] || listConfig.gainers;
+          let pool = STOCK_POOL.filter(cfg.filter);
+          if (pool.length < cfg.count) pool = STOCK_POOL.slice();
+          pool = pool.slice().sort(cfg.sort);
+          stocks.value = pickRandom(pool, Math.min(cfg.count, pool.length));
+        });
+
+        return { stocks, title };
+      },
+      template: `
+        <div>
+          <BackHeader :title="title" />
+          <div class="container">
+            <router-link v-for="stock in stocks" :key="stock.code" :to="'/stock/' + stock.code" class="stock-item">
+              <div>
+                <div class="stock-code">{{ stock.code }}</div>
+                <div class="stock-name">{{ stock.name }}</div>
+              </div>
+              <div>
+                <div class="stock-price">\${{ stock.price.toFixed(2) }}</div>
+                <div class="stock-change" :class="stock.change >= 0 ? 'text-up' : 'text-down'">
+                  {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
+                </div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       STOCK DETAIL PAGE
+       ============================================================ */
+    const StockDetailPage = {
+      components: { BackHeader },
+      setup() {
+        const route = VueRouter.useRoute();
+        const stock = Vue.ref(null);
+        const history = Vue.ref([]);
+
+        Vue.onMounted(() => {
+          const code = route.params.code;
+          stock.value = STOCK_POOL.find(s => s.code === code) || STOCK_POOL[0];
+          history.value = generateHistory(stock.value.code);
+        });
+
+        // SVG chart points
+        const chartPoints = Vue.computed(() => {
+          if (!history.value.length) return '';
+          const prices = history.value.map(h => h.price);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          const range = max - min || 1;
+          const w = 320;
+          const h = 160;
+          const pad = 10;
+          const stepX = (w - pad * 2) / (history.value.length - 1);
+          return history.value.map((p, i) => {
+            const x = pad + i * stepX;
+            const y = h - pad - ((p.price - min) / range) * (h - pad * 2);
+            return x.toFixed(1) + ',' + y.toFixed(1);
+          }).join(' ');
+        });
+
+        const chartArea = Vue.computed(() => {
+          if (!history.value.length) return '';
+          const prices = history.value.map(h => h.price);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          const range = max - min || 1;
+          const w = 320;
+          const h = 160;
+          const pad = 10;
+          const stepX = (w - pad * 2) / (history.value.length - 1);
+          const first = pad + ',' + (h - pad - ((history.value[0].price - min) / range) * (h - pad * 2)).toFixed(1);
+          const last = (pad + (history.value.length - 1) * stepX).toFixed(1) + ',' + (h - pad - ((history.value[history.value.length - 1].price - min) / range) * (h - pad * 2)).toFixed(1);
+          return first + ' ' + chartPoints.value + ' ' + last + ' ' + (pad + (history.value.length - 1) * stepX).toFixed(1) + ',' + (h - pad) + ' ' + pad + ',' + (h - pad);
+        });
+
+        return { stock, history, chartPoints, chartArea };
+      },
+      template: `
+        <div v-if="stock">
+          <BackHeader :title="stock.code" />
+          <div class="container">
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="text-xl">{{ stock.code }}</div>
+                  <div class="text-secondary">{{ stock.name }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xl">\${{ stock.price.toFixed(2) }}</div>
+                  <div :class="stock.change >= 0 ? 'text-up' : 'text-down'" class="fw-600">
+                    {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="fw-600 mb-sm">30-Day Price</div>
+              <div class="chart-container">
+                <svg viewBox="0 0 320 160" width="100%" height="160" preserveAspectRatio="none">
+                  <polygon :points="chartArea" fill="rgba(37,99,235,0.1)" />
+                  <polyline :points="chartPoints" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="row-between mt-sm">
+                <span class="text-secondary text-sm">Low: \${{ Math.min(...history.map(h => h.price)).toFixed(2) }}</span>
+                <span class="text-secondary text-sm">High: \${{ Math.max(...history.map(h => h.price)).toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       GUIDE PAGE (Financial Article)
+       ============================================================ */
+    const GuidePage = {
+      components: { BackHeader },
+      setup() {
+        const article = {
+          title: 'Understanding Market Cycles',
+          sections: [
+            { heading: 'The Four Phases', body: 'Markets move in cycles: accumulation, markup, distribution, and markdown. Recognizing the current phase helps investors align their strategy with broader trends rather than reacting to short-term noise.' },
+            { heading: 'Key Indicators', body: 'Volume, moving averages, and relative strength index (RSI) are common tools. Volume confirms price moves; moving averages smooth volatility; RSI flags overbought or oversold conditions.' },
+            { heading: 'Risk Management', body: 'Position sizing and stop-loss orders are essential. Never risk more than a small percentage of your portfolio on a single trade. Diversification across sectors reduces exposure to any one company.' },
+            { heading: 'The Long View', body: 'Short-term fluctuations are inevitable. Investors who stay disciplined and focus on fundamentals tend to outperform those who chase quick gains. Patience is a competitive advantage.' }
+          ]
+        };
+        return { article };
+      },
+      template: `
+        <div>
+          <BackHeader title="Guide" />
+          <div class="container">
+            <div class="card article-content">
+              <h2 class="mb-md">{{ article.title }}</h2>
+              <div v-for="(sec, i) in article.sections" :key="i">
+                <h3>{{ sec.heading }}</h3>
+                <p>{{ sec.body }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOLBOX PAGE
+       ============================================================ */
+    const toolboxItems = [
+      { id: 'dca', title: 'DCA Profit-Taking', desc: 'Calculate current gain vs target', route: '/tool/dca' },
+      { id: 'calendar', title: 'Wealth Calendar', desc: 'Track investment maturity dates', route: '/tool/calendar' },
+      { id: 'loan', title: 'Loan Calculator', desc: 'Equal principal & interest breakdown', route: '/tool/loan' },
+      { id: 'profit', title: 'Profit Calculator', desc: 'Daily & monthly profit summary', route: '/tool/profit' },
+      { id: 'reverse', title: 'Reverse Yield', desc: 'Find required annual return', route: '/tool/reverse' },
+      { id: 'password', title: 'Password Strength', desc: 'Check offline password security', route: '/tool/password' },
+      { id: 'credit', title: 'Credit Memo', desc: 'Track repayment countdown', route: '/tool/credit' }
+    ];
+
+    const toolboxIcons = {
+      dca: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+      calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+      loan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+      profit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+      reverse: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+      password: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+      credit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>'
+    };
+
+    const ToolboxPage = {
+      setup() {
+        return { toolboxItems, toolboxIcons };
+      },
+      template: `
+        <div class="page-content">
+          <div class="container">
+            <h2 class="text-xl mb-md">Toolbox</h2>
+          </div>
+          <div class="tool-grid">
+            <router-link v-for="tool in toolboxItems" :key="tool.id" :to="tool.route" class="tool-card">
+              <span v-html="toolboxIcons[tool.id]"></span>
+              <div>
+                <div class="tool-title">{{ tool.title }}</div>
+                <div class="tool-desc">{{ tool.desc }}</div>
+              </div>
+            </router-link>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: DCA PROFIT-TAKING
+       ============================================================ */
+    const DcaTool = {
+      components: { BackHeader },
+      setup() {
+        const cost = Vue.ref('');
+        const shares = Vue.ref('');
+        const target = Vue.ref('');
+        const currentPrice = Vue.ref('');
+
+        const result = Vue.computed(() => {
+          const c = parseFloat(cost.value);
+          const s = parseFloat(shares.value);
+          const t = parseFloat(target.value);
+          const cp = parseFloat(currentPrice.value);
+          if (isNaN(c) || isNaN(s) || isNaN(t) || isNaN(cp)) return null;
+          const invested = c * s;
+          const marketValue = cp * s;
+          const pnl = marketValue - invested;
+          const pnlPercent = invested ? (pnl / invested) * 100 : 0;
+          const targetValue = t * s;
+          const targetReached = cp >= t;
+          return {
+            invested: invested.toFixed(2),
+            marketValue: marketValue.toFixed(2),
+            pnl: pnl.toFixed(2),
+            pnlPercent: pnlPercent.toFixed(2),
+            targetValue: targetValue.toFixed(2),
+            targetReached
+          };
+        });
+
+        return { cost, shares, target, currentPrice, result };
+      },
+      template: `
+        <div>
+          <BackHeader title="DCA Profit-Taking" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Cost per Share ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="cost" placeholder="e.g. 150.00" />
+              <label class="label">Shares Held</label>
+              <input class="input" type="number" inputmode="decimal" v-model="shares" placeholder="e.g. 10" />
+              <label class="label">Target Price ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="target" placeholder="e.g. 180.00" />
+              <label class="label">Current Price ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="currentPrice" placeholder="e.g. 165.00" />
+            </div>
+
+            <div v-if="result" class="card">
+              <div class="row-between mb-sm">
+                <span>Invested</span>
+                <span class="fw-600">\${{ result.invested }}</span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>Market Value</span>
+                <span class="fw-600">\${{ result.marketValue }}</span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>P&L</span>
+                <span class="fw-600" :class="parseFloat(result.pnl) >= 0 ? 'text-up' : 'text-down'">
+                  {{ parseFloat(result.pnl) >= 0 ? '+' : '' }}\${{ result.pnl }}
+                </span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>Return</span>
+                <span class="fw-600" :class="parseFloat(result.pnlPercent) >= 0 ? 'text-up' : 'text-down'">
+                  {{ parseFloat(result.pnlPercent) >= 0 ? '+' : '' }}{{ result.pnlPercent }}%
+                </span>
+              </div>
+              <div class="divider"></div>
+              <div class="row-between">
+                <span>Target Status</span>
+                <span class="fw-600" :class="result.targetReached ? 'text-up' : 'text-secondary'">
+                  {{ result.targetReached ? 'Target Reached' : 'Below Target' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: WEALTH CALENDAR
+       ============================================================ */
+    const WealthCalendarTool = {
+      components: { BackHeader },
+      setup() {
+        const entries = Vue.ref([]);
+        const name = Vue.ref('');
+        const buyDate = Vue.ref('');
+        const term = Vue.ref('');
+        const maturityDate = Vue.ref('');
+
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+        const calendarDays = Vue.computed(() => {
+          const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+          const cells = [];
+          for (let i = 0; i < firstDay; i++) cells.push({ day: '', empty: true });
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const hasEntry = entries.value.some(e => e.maturityDate === dateStr);
+            cells.push({ day: d, dateStr, hasEntry, isToday: d === today.getDate() });
+          }
+          return cells;
+        });
+
+        function addEntry() {
+          if (!name.value || !buyDate.value || !term.value || !maturityDate.value) return;
+          entries.value.push({
+            name: name.value,
+            buyDate: buyDate.value,
+            term: term.value,
+            maturityDate: maturityDate.value
+          });
+          name.value = '';
+          buyDate.value = '';
+          term.value = '';
+          maturityDate.value = '';
+          showToast('Entry added');
+        }
+
+        function removeEntry(index) {
+          entries.value.splice(index, 1);
+        }
+
+        return { entries, name, buyDate, term, maturityDate, monthNames, currentMonth, currentYear, calendarDays, addEntry, removeEntry };
+      },
+      template: `
+        <div>
+          <BackHeader title="Wealth Calendar" />
+          <div class="container">
+            <div class="card">
+              <div class="text-center fw-600 mb-sm">{{ monthNames[currentMonth] }} {{ currentYear }}</div>
+              <div class="calendar-grid">
+                <div class="calendar-cell header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{ d }}</div>
+                <div v-for="(cell, i) in calendarDays" :key="i"
+                     class="calendar-cell"
+                     :class="{ empty: cell.empty, today: cell.isToday, checked: cell.hasEntry }">
+                  {{ cell.day }}
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="fw-600 mb-sm">Add Investment</div>
+              <label class="label">Name</label>
+              <input class="input" v-model="name" placeholder="e.g. Index Fund" />
+              <label class="label">Buy Date</label>
+              <input class="input" type="date" v-model="buyDate" />
+              <label class="label">Term</label>
+              <input class="input" v-model="term" placeholder="e.g. 6 months" />
+              <label class="label">Maturity Date</label>
+              <input class="input" type="date" v-model="maturityDate" />
+              <button class="btn mt-md" @click="addEntry">Add Entry</button>
+            </div>
+
+            <div v-if="entries.length" class="card">
+              <div class="fw-600 mb-sm">Entries</div>
+              <div v-for="(entry, i) in entries" :key="i" class="row-between mb-sm">
+                <div>
+                  <div class="fw-600">{{ entry.name }}</div>
+                  <div class="text-secondary text-sm">{{ entry.buyDate }} → {{ entry.maturityDate }}</div>
+                </div>
+                <button class="btn btn-outline" style="width:auto;padding:0 12px;min-height:36px;" @click="removeEntry(i)">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: LOAN CALCULATOR
+       ============================================================ */
+    const LoanTool = {
+      components: { BackHeader },
+      setup() {
+        const amount = Vue.ref('');
+        const rate = Vue.ref('');
+        const years = Vue.ref('');
+        const method = Vue.ref('equal-installment');
+
+        const result = Vue.computed(() => {
+          const p = parseFloat(amount.value);
+          const r = parseFloat(rate.value) / 100 / 12;
+          const n = parseFloat(years.value) * 12;
+          if (isNaN(p) || isNaN(r) || isNaN(n) || p <= 0 || n <= 0) return null;
+          if (method.value === 'equal-installment') {
+            const monthly = p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+            if (isNaN(monthly) || !isFinite(monthly)) return null;
+            const total = monthly * n;
+            return {
+              monthly: monthly.toFixed(2),
+              total: total.toFixed(2),
+              interest: (total - p).toFixed(2)
+            };
+          } else {
+            const principalPart = p / n;
+            let totalInterest = 0;
+            const schedule = [];
+            for (let i = 0; i < n; i++) {
+              const remaining = p - principalPart * i;
+              const interest = remaining * r;
+              totalInterest += interest;
+              schedule.push({
+                month: i + 1,
+                payment: (principalPart + interest).toFixed(2),
+                principal: principalPart.toFixed(2),
+                interest: interest.toFixed(2)
+              });
+            }
+            return {
+              monthly: (principalPart + p * r).toFixed(2) + ' (first)',
+              total: (p + totalInterest).toFixed(2),
+              interest: totalInterest.toFixed(2)
+            };
+          }
+        });
+
+        return { amount, rate, years, method, result };
+      },
+      template: `
+        <div>
+          <BackHeader title="Loan Calculator" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Loan Amount ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="amount" placeholder="e.g. 200000" />
+              <label class="label">Annual Interest Rate (%)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="rate" placeholder="e.g. 4.5" />
+              <label class="label">Loan Term (years)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="years" placeholder="e.g. 30" />
+              <label class="label">Repayment Method</label>
+              <select class="input" v-model="method">
+                <option value="equal-installment">Equal Installment (等额本息)</option>
+                <option value="equal-principal">Equal Principal (等额本金)</option>
+              </select>
+            </div>
+
+            <div v-if="result" class="card">
+              <div class="row-between mb-sm">
+                <span>Monthly Payment</span>
+                <span class="fw-600">\${{ result.monthly }}</span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>Total Interest</span>
+                <span class="fw-600 text-down">\${{ result.interest }}</span>
+              </div>
+              <div class="row-between">
+                <span>Total Repayment</span>
+                <span class="fw-600">\${{ result.total }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: PROFIT CALCULATOR
+       ============================================================ */
+    const ProfitTool = {
+      components: { BackHeader },
+      setup() {
+        const cost = Vue.ref('');
+        const price = Vue.ref('');
+        const qty = Vue.ref('');
+
+        const result = Vue.computed(() => {
+          const c = parseFloat(cost.value);
+          const p = parseFloat(price.value);
+          const q = parseFloat(qty.value);
+          if (isNaN(c) || isNaN(p) || isNaN(q)) return null;
+          const revenue = p * q;
+          const totalCost = c * q;
+          const profit = revenue - totalCost;
+          const margin = revenue ? (profit / revenue) * 100 : 0;
+          return {
+            revenue: revenue.toFixed(2),
+            cost: totalCost.toFixed(2),
+            profit: profit.toFixed(2),
+            margin: margin.toFixed(2)
+          };
+        });
+
+        return { cost, price, qty, result };
+      },
+      template: `
+        <div>
+          <BackHeader title="Profit Calculator" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Unit Cost ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="cost" placeholder="e.g. 10.00" />
+              <label class="label">Selling Price ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="price" placeholder="e.g. 15.00" />
+              <label class="label">Quantity Sold</label>
+              <input class="input" type="number" inputmode="decimal" v-model="qty" placeholder="e.g. 100" />
+            </div>
+
+            <div v-if="result" class="card">
+              <div class="row-between mb-sm">
+                <span>Revenue</span>
+                <span class="fw-600">\${{ result.revenue }}</span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>Total Cost</span>
+                <span class="fw-600">\${{ result.cost }}</span>
+              </div>
+              <div class="row-between mb-sm">
+                <span>Gross Profit</span>
+                <span class="fw-600" :class="parseFloat(result.profit) >= 0 ? 'text-up' : 'text-down'">\${{ result.profit }}</span>
+              </div>
+              <div class="row-between">
+                <span>Profit Margin</span>
+                <span class="fw-600">{{ result.margin }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: REVERSE YIELD
+       ============================================================ */
+    const ReverseYieldTool = {
+      components: { BackHeader },
+      setup() {
+        const target = Vue.ref('');
+        const principal = Vue.ref('');
+        const months = Vue.ref('');
+
+        const result = Vue.computed(() => {
+          const t = parseFloat(target.value);
+          const p = parseFloat(principal.value);
+          const m = parseFloat(months.value);
+          if (isNaN(t) || isNaN(p) || isNaN(m) || p <= 0 || m <= 0) return null;
+          const totalReturn = (t - p) / p;
+          const annualRate = (Math.pow(1 + totalReturn, 12 / m) - 1) * 100;
+          if (isNaN(annualRate) || !isFinite(annualRate)) return null;
+          return {
+            totalReturn: (totalReturn * 100).toFixed(2),
+            annualRate: annualRate.toFixed(2)
+          };
+        });
+
+        return { target, principal, months, result };
+      },
+      template: `
+        <div>
+          <BackHeader title="Reverse Yield" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Target Amount ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="target" placeholder="e.g. 11000" />
+              <label class="label">Principal ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="principal" placeholder="e.g. 10000" />
+              <label class="label">Investment Duration (months)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="months" placeholder="e.g. 12" />
+            </div>
+
+            <div v-if="result" class="card">
+              <div class="row-between mb-sm">
+                <span>Total Return</span>
+                <span class="fw-600 text-up">+{{ result.totalReturn }}%</span>
+              </div>
+              <div class="row-between">
+                <span>Required Annual Rate</span>
+                <span class="fw-600 text-up">{{ result.annualRate }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: PASSWORD STRENGTH (uses md5)
+       ============================================================ */
+    const PasswordTool = {
+      components: { BackHeader },
+      setup() {
+        const password = Vue.ref('');
+
+        const analysis = Vue.computed(() => {
+          const p = password.value;
+          if (!p) return { score: 0, label: 'Enter a password', color: '#e2e8f0', md5: '' };
+          let score = 0;
+          if (p.length >= 8) score++;
+          if (p.length >= 12) score++;
+          if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+          if (/\d/.test(p)) score++;
+          if (/[^a-zA-Z0-9]/.test(p)) score++;
+          // Clamp 0-4
+          score = Math.min(4, Math.max(0, score - 1));
+
+          const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+          const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#16a34a'];
+          return {
+            score,
+            label: labels[score] || labels[0],
+            color: colors[score] || colors[0],
+            md5: md5(p)
+          };
+        });
+
+        return { password, analysis };
+      },
+      template: `
+        <div>
+          <BackHeader title="Password Strength" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Enter Password</label>
+              <input class="input" type="password" v-model="password" placeholder="Type a password..." />
+              <div class="strength-bar mt-md">
+                <div class="strength-fill" :style="{ width: (analysis.score + 1) * 20 + '%', background: analysis.color }"></div>
+              </div>
+              <div class="row-between mt-sm">
+                <span class="text-secondary text-sm">Strength</span>
+                <span class="fw-600 text-sm" :style="{ color: analysis.color }">{{ analysis.label }}</span>
+              </div>
+            </div>
+
+            <div v-if="analysis.md5" class="card">
+              <div class="label">MD5 Digest</div>
+              <div class="text-sm" style="word-break:break-all;font-family:monospace;">{{ analysis.md5 }}</div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       TOOL: CREDIT MEMO
+       ============================================================ */
+    const CreditMemoTool = {
+      components: { BackHeader },
+      setup() {
+        const items = Vue.ref([]);
+        const person = Vue.ref('');
+        const amount = Vue.ref('');
+        const dueDate = Vue.ref('');
+
+        function addItem() {
+          if (!person.value || !amount.value || !dueDate.value) return;
+          items.value.push({
+            person: person.value,
+            amount: parseFloat(amount.value).toFixed(2),
+            dueDate: dueDate.value,
+            id: Date.now()
+          });
+          person.value = '';
+          amount.value = '';
+          dueDate.value = '';
+          showToast('Memo added');
+        }
+
+        function removeItem(id) {
+          items.value = items.value.filter(i => i.id !== id);
+        }
+
+        function daysLeft(due) {
+          const now = new Date();
+          now.setHours(0,0,0,0);
+          const d = new Date(due);
+          d.setHours(0,0,0,0);
+          const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+          return diff;
+        }
+
+        // Request notification permission on mount if available
+        Vue.onMounted(() => {
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().catch(() => {});
+          }
+        });
+
+        function notifyItem(item) {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Repayment Reminder', {
+              body: item.person + ' owes $' + item.amount + ' — due ' + item.dueDate
+            });
+          } else {
+            showToast('Reminder: ' + item.person + ' due ' + item.dueDate);
+          }
+        }
+
+        return { items, person, amount, dueDate, addItem, removeItem, daysLeft, notifyItem };
+      },
+      template: `
+        <div>
+          <BackHeader title="Credit Memo" />
+          <div class="container">
+            <div class="card">
+              <div class="fw-600 mb-sm">New Credit Entry</div>
+              <label class="label">Person / Entity</label>
+              <input class="input" v-model="person" placeholder="e.g. John Doe" />
+              <label class="label">Amount ($)</label>
+              <input class="input" type="number" inputmode="decimal" v-model="amount" placeholder="e.g. 500" />
+              <label class="label">Due Date</label>
+              <input class="input" type="date" v-model="dueDate" />
+              <button class="btn mt-md" @click="addItem">Add Memo</button>
+            </div>
+
+            <div v-if="items.length" class="card">
+              <div class="fw-600 mb-sm">Outstanding</div>
+              <div v-for="item in items" :key="item.id" class="row-between mb-sm" style="align-items:flex-start;">
+                <div>
+                  <div class="fw-600">{{ item.person }}</div>
+                  <div class="text-secondary text-sm">\${{ item.amount }} · Due {{ item.dueDate }}</div>
+                  <div class="text-sm" :class="daysLeft(item.dueDate) < 0 ? 'text-down' : daysLeft(item.dueDate) <= 3 ? 'text-up' : 'text-secondary'">
+                    {{ daysLeft(item.dueDate) < 0 ? 'Overdue ' + Math.abs(daysLeft(item.dueDate)) + 'd' : daysLeft(item.dueDate) === 0 ? 'Due today' : daysLeft(item.dueDate) + ' days left' }}
+                  </div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0;">
+                  <button class="btn btn-outline" style="width:auto;padding:0 10px;min-height:36px;font-size:12px;" @click="notifyItem(item)">Remind</button>
+                  <button class="btn btn-outline" style="width:auto;padding:0 10px;min-height:36px;font-size:12px;" @click="removeItem(item.id)">Clear</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS PAGE
+       ============================================================ */
+    const SettingsPage = {
+      setup() {
+        return {};
+      },
+      template: `
+        <div class="page-content">
+          <div class="container">
+            <h2 class="text-xl mb-md">Settings</h2>
+          </div>
+          <div class="settings-group">
+            <router-link to="/settings/version" class="settings-item">
+              <span>Version</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <router-link to="/settings/privacy" class="settings-item">
+              <span>Privacy Policy</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <router-link to="/settings/terms" class="settings-item">
+              <span>Terms of Service</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <router-link to="/settings/team" class="settings-item">
+              <span>About Team</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <a href="mailto:com.countdown.day@gmail.com" class="settings-item">
+              <span>Contact Us</span>
+              <span class="arrow">›</span>
+            </a>
+          </div>
+          <div class="settings-group">
+            <router-link to="/settings/checkin" class="settings-item">
+              <span>Monthly Check-in</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <router-link to="/settings/feedback" class="settings-item">
+              <span>Feedback</span>
+              <span class="arrow">›</span>
+            </router-link>
+            <router-link to="/settings/inbox" class="settings-item">
+              <span>Inbox</span>
+              <span class="arrow">›</span>
+            </router-link>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: VERSION
+       ============================================================ */
+    const VersionPage = {
+      components: { BackHeader },
+      setup() {
+        return { appName: APP_NAME, bundleId: BUNDLE_ID };
+      },
+      template: `
+        <div>
+          <BackHeader title="Version" />
+          <div class="container">
+            <div class="card text-center">
+              <div class="text-xl mb-sm">{{ appName }}</div>
+              <div class="text-secondary">Version 1.0.0</div>
+              <div class="text-secondary text-sm mt-sm">Build 2024.01</div>
+            </div>
+            <div class="card">
+              <div class="row-between mb-sm">
+                <span class="text-secondary">Bundle ID</span>
+                <span class="text-sm">{{ bundleId }}</span>
+              </div>
+              <div class="row-between">
+                <span class="text-secondary">Platform</span>
+                <span class="text-sm">Android</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: PRIVACY POLICY
+       ============================================================ */
+    const PrivacyPage = {
+      components: { BackHeader },
+      setup() {
+        const content = [
+          'BP Trade ("we", "our", or "us") respects your privacy. This policy explains how we handle information when you use our application.',
+          'We do not collect personal identification information. Device fingerprinting is used solely for security and to detect unauthorized access. No data is shared with third parties for marketing purposes.',
+          'All financial data you enter into our tools is processed locally on your device and is never transmitted to our servers. You maintain full control over your information.',
+          'By using BP Trade, you consent to the practices described in this policy. We may update this policy from time to time; continued use constitutes acceptance of any changes.'
+        ];
+        return { content };
+      },
+      template: `
+        <div>
+          <BackHeader title="Privacy Policy" />
+          <div class="container">
+            <div class="card article-content">
+              <p v-for="(p, i) in content" :key="i">{{ p }}</p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: TERMS OF SERVICE
+       ============================================================ */
+    const TermsPage = {
+      components: { BackHeader },
+      setup() {
+        const content = [
+          'Welcome to BP Trade. By accessing or using our application, you agree to be bound by these Terms of Service.',
+          'The tools and information provided are for educational and informational purposes only. They do not constitute financial advice. Always consult a qualified professional before making investment decisions.',
+          'You are responsible for maintaining the confidentiality of any credentials you use with this application. We are not liable for any loss arising from unauthorized access.',
+          'We reserve the right to modify or discontinue the service at any time without prior notice. Continued use after changes constitutes acceptance of the revised terms.'
+        ];
+        return { content };
+      },
+      template: `
+        <div>
+          <BackHeader title="Terms of Service" />
+          <div class="container">
+            <div class="card article-content">
+              <p v-for="(p, i) in content" :key="i">{{ p }}</p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: ABOUT TEAM
+       ============================================================ */
+    const TeamPage = {
+      components: { BackHeader },
+      setup() {
+        const members = [
+          { name: 'Alex Chen', role: 'Lead Engineer', bio: 'Full-stack developer with 8 years in fintech.' },
+          { name: 'Sarah Kim', role: 'Product Designer', bio: 'Passionate about creating intuitive financial experiences.' },
+          { name: 'James Liu', role: 'Data Analyst', bio: 'Expert in market data and investment analytics.' }
+        ];
+        return { members };
+      },
+      template: `
+        <div>
+          <BackHeader title="About Team" />
+          <div class="container">
+            <div class="card text-center mb-md">
+              <div class="text-xl mb-sm">BP Trade</div>
+              <div class="text-secondary">Built by a small team dedicated to making financial tools accessible to everyone.</div>
+            </div>
+            <div v-for="(m, i) in members" :key="i" class="card">
+              <div class="fw-600">{{ m.name }}</div>
+              <div class="text-secondary text-sm">{{ m.role }}</div>
+              <div class="text-sm mt-sm">{{ m.bio }}</div>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: CHECK-IN
+       ============================================================ */
+    const CheckinPage = {
+      components: { BackHeader },
+      setup() {
+        const STORAGE_KEY = 'bp_checkin_days';
+        const checkedDays = Vue.ref([]);
+
+        Vue.onMounted(() => {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) checkedDays.value = JSON.parse(stored);
+          } catch (e) { /* ignore */ }
+        });
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const todayStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+        const calendarDays = Vue.computed(() => {
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const cells = [];
+          for (let i = 0; i < firstDay; i++) cells.push({ day: '', empty: true });
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            cells.push({
+              day: d,
+              dateStr,
+              checked: checkedDays.value.includes(dateStr),
+              isToday: dateStr === todayStr
+            });
+          }
+          return cells;
+        });
+
+        const alreadyChecked = Vue.computed(() => checkedDays.value.includes(todayStr));
+
+        function doCheckin() {
+          if (alreadyChecked.value) {
+            showToast('Already checked in today');
+            return;
+          }
+          checkedDays.value.push(todayStr);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedDays.value));
+          } catch (e) { /* ignore */ }
+          showToast('Check-in successful');
+        }
+
+        return { monthNames, currentMonth: month, currentYear: year, calendarDays, doCheckin, alreadyChecked };
+      },
+      template: `
+        <div>
+          <BackHeader title="Monthly Check-in" />
+          <div class="container">
+            <div class="card">
+              <div class="text-center fw-600 mb-sm">{{ monthNames[currentMonth] }} {{ currentYear }}</div>
+              <div class="calendar-grid">
+                <div class="calendar-cell header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{ d }}</div>
+                <div v-for="(cell, i) in calendarDays" :key="i"
+                     class="calendar-cell"
+                     :class="{ empty: cell.empty, today: cell.isToday, checked: cell.checked }">
+                  {{ cell.day }}
+                </div>
+              </div>
+            </div>
+            <button class="btn" :disabled="alreadyChecked" @click="doCheckin">
+              {{ alreadyChecked ? 'Checked in today' : 'Check in today' }}
+            </button>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: FEEDBACK
+       ============================================================ */
+    const FeedbackPage = {
+      components: { BackHeader },
+      setup() {
+        const router = VueRouter.useRouter();
+        const title = Vue.ref('');
+        const content = Vue.ref('');
+
+        const canSend = Vue.computed(() => title.value.trim() && content.value.trim());
+
+        function send() {
+          if (!canSend.value) return;
+          showToast('Feedback sent successfully');
+          title.value = '';
+          content.value = '';
+          setTimeout(() => router.back(), 300);
+        }
+
+        return { title, content, canSend, send };
+      },
+      template: `
+        <div>
+          <BackHeader title="Feedback" />
+          <div class="container">
+            <div class="card">
+              <label class="label">Title</label>
+              <input class="input" v-model="title" placeholder="Brief summary" />
+              <label class="label">Message</label>
+              <textarea class="input" v-model="content" placeholder="Describe your feedback..." rows="5"></textarea>
+              <button class="btn mt-md" :class="{ disabled: !canSend }" :disabled="!canSend" @click="send">Send</button>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       SETTINGS: INBOX
+       ============================================================ */
+    const InboxPage = {
+      components: { BackHeader },
+      setup() {
+        const messages = Vue.ref([
+          {
+            id: 1,
+            title: 'Welcome',
+            content: 'Welcome to BP Trade! Explore market data, use our financial tools, and stay on top of your investments. We are glad to have you here.'
+          }
+        ]);
+        const selected = Vue.ref(null);
+
+        function openMessage(msg) {
+          selected.value = msg;
+        }
+
+        function closeModal() {
+          selected.value = null;
+        }
+
+        return { messages, selected, openMessage, closeModal };
+      },
+      template: `
+        <div>
+          <BackHeader title="Inbox" />
+          <div class="container">
+            <div v-if="!messages.length" class="empty-state">No messages</div>
+            <div v-for="msg in messages" :key="msg.id" class="card" @click="openMessage(msg)" style="cursor:pointer;">
+              <div class="fw-600">{{ msg.title }}</div>
+              <div class="text-secondary text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ msg.content }}</div>
+            </div>
+          </div>
+
+          <div v-if="selected" class="modal-overlay" @click.self="closeModal">
+            <div class="modal-box">
+              <div class="fw-600 mb-sm">{{ selected.title }}</div>
+              <div class="text-sm">{{ selected.content }}</div>
+              <button class="btn mt-md" @click="closeModal">Close</button>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    /* ============================================================
+       ROUTER CONFIGURATION
+       ============================================================ */
+    const routes = [
+      { path: '/', redirect: '/loading' },
+      { path: '/loading', component: LoadingPage, meta: { noTab: true } },
+      { path: '/home', component: HomePage, meta: { tab: true } },
+      { path: '/list/:type', component: StockListPage, meta: { noTab: true } },
+      { path: '/stock/:code', component: StockDetailPage, meta: { noTab: true } },
+      { path: '/guide', component: GuidePage, meta: { noTab: true } },
+      { path: '/toolbox', component: ToolboxPage, meta: { tab: true } },
+      { path: '/tool/dca', component: DcaTool, meta: { noTab: true } },
+      { path: '/tool/calendar', component: WealthCalendarTool, meta: { noTab: true } },
+      { path: '/tool/loan', component: LoanTool, meta: { noTab: true } },
+      { path: '/tool/profit', component: ProfitTool, meta: { noTab: true } },
+      { path: '/tool/reverse', component: ReverseYieldTool, meta: { noTab: true } },
+      { path: '/tool/password', component: PasswordTool, meta: { noTab: true } },
+      { path: '/tool/credit', component: CreditMemoTool, meta: { noTab: true } },
+      { path: '/settings', component: SettingsPage, meta: { tab: true } },
+      { path: '/settings/version', component: VersionPage, meta: { noTab: true } },
+      { path: '/settings/privacy', component: PrivacyPage, meta: { noTab: true } },
+      { path: '/settings/terms', component: TermsPage, meta: { noTab: true } },
+      { path: '/settings/team', component: TeamPage, meta: { noTab: true } },
+      { path: '/settings/checkin', component: CheckinPage, meta: { noTab: true } },
+      { path: '/settings/feedback', component: FeedbackPage, meta: { noTab: true } },
+      { path: '/settings/inbox', component: InboxPage, meta: { noTab: true } }
+    ];
+
+    const router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
+      routes
+    });
+
+    /* ============================================================
+       APP ROOT
+       ============================================================ */
+    const App = {
+      setup() {
+        const route = VueRouter.useRoute();
+        const showTab = Vue.computed(() => {
+          return route.meta && route.meta.tab;
+        });
+        return { showTab, toastState };
+      },
+      template: `
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+
+        <nav v-if="showTab" class="tab-bar">
+          <router-link to="/home" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Home</span>
+          </router-link>
+          <router-link to="/toolbox" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            <span>Toolbox</span>
+          </router-link>
+          <router-link to="/settings" class="tab-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Settings</span>
+          </router-link>
+        </nav>
+
+        <transition name="toast">
+          <div v-if="toastState.show" class="toast">{{ toastState.message }}</div>
+        </transition>
+      `
+    };
+
+    const app = Vue.createApp(App);
+    app.use(router);
+    app.mount('#app');
+  </script>
+</body>
+</html>
